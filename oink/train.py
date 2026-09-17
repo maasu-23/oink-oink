@@ -13,8 +13,11 @@ from oink.env import PigDodgeEnv
 from oink.policy import CircuitFeaturesExtractor
 
 
-def make_model(variant: str, nodes_csv: Path, adjacency_npz: Path, seed: int):
-    env = make_vec_env(lambda: Monitor(PigDodgeEnv()), n_envs=1, seed=seed)
+def make_model(variant: str, nodes_csv: Path, adjacency_npz: Path, seed: int, log_dir: Path | None = None):
+    monitor_path = str(log_dir / "monitor") if log_dir is not None else None
+    if log_dir is not None:
+        log_dir.mkdir(parents=True, exist_ok=True)
+    env = make_vec_env(lambda: Monitor(PigDodgeEnv(), filename=monitor_path), n_envs=1, seed=seed)
     policy_kwargs = dict(
         features_extractor_class=CircuitFeaturesExtractor,
         features_extractor_kwargs=dict(nodes_csv=nodes_csv, adjacency_npz=adjacency_npz, variant=variant, seed=seed),
@@ -32,10 +35,12 @@ def main():
     parser.add_argument("--timesteps", type=int, default=50_000)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--out", type=Path, default=None)
+    parser.add_argument("--log-dir", type=Path, default=None)
     args = parser.parse_args()
 
     out = args.out or Path(f"data/processed/ppo_{args.variant}_seed{args.seed}.zip")
-    model, env = make_model(args.variant, args.nodes_csv, args.adjacency_npz, args.seed)
+    log_dir = args.log_dir or Path(f"data/processed/logs/{args.variant}_seed{args.seed}")
+    model, env = make_model(args.variant, args.nodes_csv, args.adjacency_npz, args.seed, log_dir)
     model.learn(total_timesteps=args.timesteps)
     out.parent.mkdir(parents=True, exist_ok=True)
     model.save(out)
