@@ -18,6 +18,7 @@ Usage:
         --out-dir data/processed
 """
 import argparse
+import re
 from pathlib import Path
 
 import numpy as np
@@ -26,7 +27,15 @@ import scipy.sparse as sp
 
 INPUT_FAMILIES = ["T4 Neuron", "T5 Neuron"]
 PROCESSING_FAMILIES = ["HS", "VS"]
-OUTPUT_FAMILIES = ["DN"]
+
+# NOTE: visual_neuron_types.csv.gz has its own family=="DN" tag, but those 20
+# neurons turn out to have ZERO synapses from HS/VS in this dataset -- they
+# are an unrelated sample of the ~350 known descending-neuron types. The
+# actual descending partners of HS/VS carry short type-code labels (DNp_L,
+# DNg_R, DNa_L, ...) in labels.csv.gz instead. We detect the real output
+# layer by looking at who HS/VS and T4/T5 actually synapse onto and matching
+# that naming convention, rather than trusting the unrelated family tag.
+DN_LABEL_PATTERN = re.compile(r"^DN[A-Za-z]{0,4}\d{0,3}(_[LR])?$")
 
 # Predicted-neurotransmitter -> synapse sign. ACh is excitatory; GABA and
 # glutamate are treated as inhibitory (glutamate is inhibitory at fly NMJs
@@ -44,23 +53,34 @@ def load_tables(data_dir: Path):
     neurons = pd.read_csv(data_dir / "neurons.csv.gz")
     visual_types = pd.read_csv(data_dir / "visual_neuron_types.csv.gz")
     connections = pd.read_csv(data_dir / "connections_princeton.csv.gz")
-    return neurons, visual_types, connections
+    labels = pd.read_csv(data_dir / "labels.csv.gz")
+    return neurons, visual_types, connections, labels
 
 
-def build_node_table(visual_types: pd.DataFrame) -> pd.DataFrame:
-    families = INPUT_FAMILIES + PROCESSING_FAMILIES + OUTPUT_FAMILIES
-    nodes = visual_types[visual_types["family"].isin(families)].copy()
+def find_descending_outputs(upstream_ids: set, connections: pd.DataFrame, labels: pd.DataFrame) -> pd.DataFrame:
+    """Neurons downstream of `upstream_ids` whose label matches DN naming (DNp_L, DNg_R, ...)."""
+    targets = set(connections.loc[connections["pre_root_id"].isin(upstream_ids), "post_root_id"])
+    lab = labels[labels["root_id"].isin(targets)].copy()
+    lab["prefix"] = lab["label"].fillna("").str.split(";").str[0].str.strip()
+    lab["is_dn"] = lab["prefix"].apply(lambda s: bool(DN_LABEL_PATTERN.match(s)))
+    dn = lab.loc[lab["is_dn"], ["root_id", "prefix"]].drop_duplicates(subset="root_id")
+    return dn.rename(columns={"prefix": "type"})
+
+
+def build_node_table(visual_types: pd.DataFrame, connections: pd.DataFrame, labels: pd.DataFrame) -> pd.DataFrame:
+    in_proc_families = INPUT_FAMILIES + PROCESSING_FAMILIES
+    nodes = visual_types[visual_types["family"].isin(in_proc_families)].copy()
     nodes = nodes.drop_duplicates(subset="root_id")
+    nodes["role"] = np.where(nodes["family"].isin(INPUT_FAMILIES), "input", "processing")
 
-    def role(family):
-        if family in INPUT_FAMILIES:
-            return "input"
-        if family in PROCESSING_FAMILIES:
-            return "processing"
-        return "output"
+    upstream_ids = set(nodes["root_id"])
+    dn = find_descending_outputs(upstream_ids, connections, labels)
+    dn["family"] = "DN"
+    dn["role"] = "output"
+    dn["side"] = np.nan
 
-    nodes["role"] = nodes["family"].map(role)
-    nodes = nodes.reset_index(drop=True)
+    nodes = pd.concat([nodes[["root_id", "type", "family", "role", "side"]], dn[["root_id", "type", "family", "role", "side"]]])
+    nodes = nodes.drop_duplicates(subset="root_id").reset_index(drop=True)
     nodes["node_index"] = nodes.index
     return nodes[["node_index", "root_id", "type", "family", "role", "side"]]
 
@@ -102,12 +122,20 @@ def sanity_check(nodes: pd.DataFrame, adj: sp.csr_matrix):
     print(f"Total signed edges (nonzero entries): {adj.nnz}")
 
     input_idx = nodes.loc[nodes["role"] == "input", "node_index"].to_numpy()
+    proc_idx = nodes.loc[nodes["role"] == "processing", "node_index"].to_numpy()
     output_idx = nodes.loc[nodes["role"] == "output", "node_index"].to_numpy()
     in_to_out = adj[np.ix_(input_idx, output_idx)]
+    proc_to_out = adj[np.ix_(proc_idx, output_idx)]
     print(f"Direct input->output edges (T4/T5 -> DN, bypassing HS/VS): {in_to_out.nnz}")
+    print(f"Processing->output edges (HS/VS -> DN): {proc_to_out.nnz}")
 
     if counts.get("input", 0) == 0 or counts.get("output", 0) == 0:
         raise SystemExit("Sanity check failed: missing input or output neurons.")
+    if proc_to_out.nnz == 0 and in_to_out.nnz == 0:
+        raise SystemExit(
+            "Sanity check failed: output layer has no incoming edges from input/processing "
+            "-- the circuit is disconnected, RL signal could never reach it."
+        )
 
 
 def plot_subgraph(nodes: pd.DataFrame, agg: pd.DataFrame, out_path: Path, max_nodes: int = 300):
@@ -171,10 +199,10 @@ def main():
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Loading FlyWire tables from {args.data_dir} ...")
-    neurons, visual_types, connections = load_tables(args.data_dir)
+    neurons, visual_types, connections, labels = load_tables(args.data_dir)
 
     print("Building node table (T4/T5 input, HS/VS processing, DN output) ...")
-    nodes = build_node_table(visual_types)
+    nodes = build_node_table(visual_types, connections, labels)
 
     print("Building signed adjacency matrix ...")
     adj, agg = build_adjacency(nodes, neurons, connections)
