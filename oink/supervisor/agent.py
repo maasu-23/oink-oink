@@ -15,8 +15,11 @@ import boto3
 from oink.supervisor.tool_schemas import TOOL_CONFIG
 from oink.supervisor.tools import TOOL_REGISTRY
 
-DEFAULT_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20241022-v2:0")
-DEFAULT_REGION = os.environ.get("AWS_REGION", "us-east-1")
+# Set BEDROCK_MODEL_ID to your inference profile ARN (from the Bedrock
+# console/playground's "View API request") -- not hardcoded here since it
+# embeds your AWS account ID. See README/.env.example.
+DEFAULT_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID")
+DEFAULT_REGION = os.environ.get("AWS_REGION", "ap-south-1")
 
 SYSTEM_PROMPT = """\
 You are the training supervisor for PigBrain, a project comparing a fly-connectome-constrained \
@@ -31,7 +34,12 @@ uncertainty when the data doesn't fully support a claim.
 
 
 class Supervisor:
-    def __init__(self, model_id: str = DEFAULT_MODEL_ID, region: str = DEFAULT_REGION):
+    def __init__(self, model_id: str | None = DEFAULT_MODEL_ID, region: str = DEFAULT_REGION):
+        if not model_id:
+            raise ValueError(
+                "No model id set. Export BEDROCK_MODEL_ID to your Bedrock inference "
+                "profile ARN (see .env.example) or pass model_id explicitly."
+            )
         self.client = boto3.client("bedrock-runtime", region_name=region)
         self.model_id = model_id
         self.messages = []

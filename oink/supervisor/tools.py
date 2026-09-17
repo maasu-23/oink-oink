@@ -105,6 +105,19 @@ def get_circuit_summary() -> dict:
     }
 
 
+def list_neurons(role: str, limit: int = 10) -> dict:
+    """List sample FlyWire root_ids for a given neuron role.
+
+    role: "input" (T4/T5), "processing" (HS/VS), or "output" (descending neurons).
+    Use this to discover real root_ids before calling get_neuron_connections.
+    """
+    if role not in ("input", "processing", "output"):
+        return {"error": "role must be 'input', 'processing', or 'output'"}
+    nodes = pd.read_csv(NODES_CSV)
+    ids = nodes.loc[nodes["role"] == role, "root_id"].head(limit).tolist()
+    return {"role": role, "root_ids": [int(i) for i in ids], "total_in_role": int((nodes["role"] == role).sum())}
+
+
 def get_neuron_connections(root_id: int, direction: str = "both", limit: int = 20) -> dict:
     """Look up a specific neuron's synaptic partners by its FlyWire root_id.
 
@@ -182,6 +195,7 @@ TOOL_REGISTRY = {
     "get_training_metrics": get_training_metrics,
     "compare_variants": compare_variants,
     "get_circuit_summary": get_circuit_summary,
+    "list_neurons": list_neurons,
     "get_neuron_connections": get_neuron_connections,
     "trigger_retrain": trigger_retrain,
 }

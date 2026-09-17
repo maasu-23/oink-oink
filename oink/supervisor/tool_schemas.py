@@ -53,6 +53,22 @@ TOOL_CONFIG = {
         },
         {
             "toolSpec": {
+                "name": "list_neurons",
+                "description": "List sample FlyWire root_ids for a given neuron role (input/processing/output). Use this to discover real neuron ids before calling get_neuron_connections.",
+                "inputSchema": {
+                    "json": {
+                        "type": "object",
+                        "properties": {
+                            "role": {"type": "string", "enum": ["input", "processing", "output"]},
+                            "limit": {"type": "integer", "description": "Max ids to return (default 10)."},
+                        },
+                        "required": ["role"],
+                    }
+                },
+            }
+        },
+        {
+            "toolSpec": {
                 "name": "get_neuron_connections",
                 "description": "Look up a specific neuron's synaptic partners (upstream and/or downstream) by its FlyWire root_id, with synapse weights.",
                 "inputSchema": {
