@@ -40,6 +40,12 @@ but it does not itself learn over time.
 |---|---|
 | ![untrained pig](data/processed/pig_random.gif) | ![trained pig](data/processed/pig_connectome_trained.gif) |
 
+**Bonus: the real circuit in 3D.** Rendered from the actual FlyWire neuron
+skeletons (not an abstract graph) — 631 real T4/T5, HS/VS, and DN neurons
+from our extracted circuit, colored by role:
+
+![circuit in 3D](data/processed/circuit_3d.gif)
+
 ## Architecture
 
 ```mermaid
