@@ -22,6 +22,7 @@ PIG_Y = HEIGHT - 30
 PIG_HALF_WIDTH = 20
 PIG_STEP = 8
 STIMULUS_RADIUS = 8
+MAX_STIM_VX = 2.0
 MAX_STEPS = 500
 
 PINK = (230, 150, 170)
@@ -52,10 +53,15 @@ class PigDodgeEnv(gym.Env):
         self.steps = 0
 
     def _spawn_stimulus(self):
-        self.stim_x = self._rng.uniform(STIMULUS_RADIUS, WIDTH - STIMULUS_RADIUS)
+        # Thrown *at* the pig: spawn near it and aim at (roughly) where it is
+        # now. With uniform random spawns, parking in a corner dodged ~90% of
+        # balls by luck and the policy learned to camp instead of dodge.
+        self.stim_x = float(np.clip(self.pig_x + self._rng.normal(0, 80), STIMULUS_RADIUS, WIDTH - STIMULUS_RADIUS))
         self.stim_y = 0.0
-        self.stim_vx = self._rng.uniform(-1.5, 1.5)
         self.stim_vy = self._rng.uniform(3.0, 5.0)
+        target_x = self.pig_x + self._rng.normal(0, 15)
+        steps_to_arrive = (PIG_Y - STIMULUS_RADIUS) / self.stim_vy
+        self.stim_vx = float(np.clip((target_x - self.stim_x) / steps_to_arrive, -MAX_STIM_VX, MAX_STIM_VX))
 
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
@@ -72,7 +78,7 @@ class PigDodgeEnv(gym.Env):
                 (self.pig_x / WIDTH) * 2 - 1,
                 (self.stim_x / WIDTH) * 2 - 1,
                 (self.stim_y / HEIGHT) * 2 - 1,
-                np.clip(self.stim_vx / 2.0, -1, 1),
+                np.clip(self.stim_vx / MAX_STIM_VX, -1, 1),
                 np.clip(self.stim_vy / 6.0, -1, 1),
             ],
             dtype=np.float32,
