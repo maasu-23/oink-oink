@@ -1,0 +1,7 @@
+variant,seed,final_ep_rew_mean,n_episodes
+connectome,0,31.744999999999994,349
+connectome,1,31.6025,374
+connectome,2,31.554999999999996,325
+baseline,0,29.279999999999994,394
+baseline,1,2.645,831
+baseline,2,30.15749999999999,409

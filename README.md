@@ -14,16 +14,23 @@ than a same-sized, same-edge-count, randomly-rewired network?
 
 ## Result (honest, up front)
 
-The connectome-constrained network finished with a **higher mean** final
-reward (25.09 vs. 22.97 across 3 seeds) and **notably lower variance**
-across seeds (std 2.49 vs. 6.87) than the random baseline. That said:
+On a pig-dodge task where a ball is thrown at the pig, the
+connectome-constrained network **learned ~1.7× faster** than a size- and
+edge-matched random network (rolling reward ≥ 25 by ~22–27k timesteps vs.
+~39–43k) and **converged on 3/3 seeds** where the baseline converged on 2/3.
+Final reward: connectome 31.6 ± 0.1 vs. baseline 20.7 ± 15.6 (the baseline's
+spread is almost entirely its one failed seed). That said:
 
-- Reward curves **overlap heavily** for most of training — see the plot below.
-- **3 seeds is limited statistical power.** This is a suggestive result, not
-  a strong "connectome wins" claim.
-- Consistency across seeds, not the mean gap, is the more interesting signal.
+- Among runs that *did* converge, final performance is similar (~30 vs ~31.6)
+  and both ended up with essentially the same "always move away" policy.
+- **3 seeds is limited statistical power.** "3/3 vs 2/3 seeds" could be luck.
+- The connectome network also inherits real synapse counts as initial
+  weights, so this tests topology+initialization together, not topology alone.
+- **v1 of this experiment was flawed and is kept for transparency:** with
+  uniformly random ball spawns, every trained pig learned to hide in a corner
+  instead of dodging. The task was fixed and everything re-run.
 
-Full writeup: [`results/PHASE3_RESULTS.md`](results/PHASE3_RESULTS.md).
+Full writeup, including the v1 → v2 story: [`results/PHASE3_RESULTS.md`](results/PHASE3_RESULTS.md).
 
 **The RL agent is the part that is genuinely self-learning.** The Bedrock
 layer described below is an automated training *supervisor* — it makes
@@ -96,7 +103,8 @@ flowchart LR
    synaptic topology (`ConnectomeNetwork`), and a size-and-edge-matched
    randomly-rewired control (`BaselineNetwork`).
 3. **Phase 3 — Experiment:** trained both variants with PPO across 3 seeds
-   at 150,000 timesteps each, compared final reward and stability.
+   at 150,000 timesteps each, compared final reward, sample efficiency and
+   reliability. Caught and fixed a task flaw (corner-camping) and re-ran.
 4. **Phase 4 — Supervisor:** a Bedrock agent (Claude Sonnet 4.5) with tools
    to read real training logs, query the connectome graph, and trigger new
    training runs — verified live end-to-end.
