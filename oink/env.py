@@ -31,6 +31,47 @@ RED = (200, 40, 40)
 SKY = (235, 245, 250)
 GROUND = (210, 230, 190)
 
+# Blocky side-view pig, facing right. Each char is a 2x2 pixel block; the
+# 20x14 grid scales to 40x28 px, matching the PIG_HALF_WIDTH hitbox.
+PIXEL = 2
+PIG_PALETTE = {"p": PINK, "d": DARK_PINK, "n": (150, 70, 90), "k": (30, 30, 30)}
+PIG_BODY = [
+    "....................",
+    "............pppppppp",
+    "............pppppppp",
+    "..ppppppppppppppkppp",
+    "..pppppppppppppppppp",
+    "..pppppppppppppppddd",
+    "..pppppppppppppppdnd",
+    "..pppppppppppppppddd",
+    "..pppppppppppppppppp",
+    "..pppppppppppppppppp",
+]
+PIG_LEGS = [
+    [  # standing / stride A
+        "...pp..pp..pp..pp...",
+        "...pp..pp..pp..pp...",
+        "...pp..pp..pp..pp...",
+        "...dd..dd..dd..dd...",
+    ],
+    [  # stride B: legs 1 and 3 lifted
+        "...pp..pp..pp..pp...",
+        "...pp..pp..pp..pp...",
+        "...dd..pp..dd..pp...",
+        ".......dd......dd...",
+    ],
+]
+
+
+def _build_pig_sprite(legs: list[str]) -> pygame.Surface:
+    rows = PIG_BODY + legs
+    surf = pygame.Surface((len(rows[0]) * PIXEL, len(rows) * PIXEL), pygame.SRCALPHA)
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch in PIG_PALETTE:
+                surf.fill(PIG_PALETTE[ch], (x * PIXEL, y * PIXEL, PIXEL, PIXEL))
+    return surf
+
 
 class PigDodgeEnv(gym.Env):
     metadata = {"render_modes": ["rgb_array"], "render_fps": 30}
@@ -43,6 +84,7 @@ class PigDodgeEnv(gym.Env):
         self.action_space = spaces.Discrete(3)  # 0=left, 1=stay, 2=right
 
         self._surface = pygame.Surface((WIDTH, HEIGHT))
+        self._pig_frames = [_build_pig_sprite(legs) for legs in PIG_LEGS]
         self._rng = np.random.default_rng()
 
         self.pig_x = WIDTH / 2
@@ -51,6 +93,10 @@ class PigDodgeEnv(gym.Env):
         self.stim_vx = 0.0
         self.stim_vy = 0.0
         self.steps = 0
+        # Render-only state (never observed by the agent).
+        self.facing = 1
+        self.moving = False
+        self.stride = 0
 
     def _spawn_stimulus(self):
         # Thrown *at* the pig: spawn near it and aim at (roughly) where it is
@@ -70,6 +116,7 @@ class PigDodgeEnv(gym.Env):
         self.pig_x = WIDTH / 2
         self._spawn_stimulus()
         self.steps = 0
+        self.facing, self.moving, self.stride = 1, False, 0
         return self._obs(), {}
 
     def _obs(self):
@@ -87,8 +134,12 @@ class PigDodgeEnv(gym.Env):
     def step(self, action: int):
         if action == 0:
             self.pig_x -= PIG_STEP
+            self.facing = -1
         elif action == 2:
             self.pig_x += PIG_STEP
+            self.facing = 1
+        self.moving = action != 1
+        self.stride += self.moving
         self.pig_x = float(np.clip(self.pig_x, PIG_HALF_WIDTH, WIDTH - PIG_HALF_WIDTH))
 
         self.stim_x += self.stim_vx
@@ -120,14 +171,10 @@ class PigDodgeEnv(gym.Env):
         surf.fill(SKY)
         pygame.draw.rect(surf, GROUND, (0, PIG_Y + 15, WIDTH, HEIGHT - PIG_Y - 15))
 
-        px, py = int(self.pig_x), PIG_Y
-        pygame.draw.ellipse(surf, PINK, (px - 22, py - 14, 44, 28))
-        pygame.draw.polygon(surf, DARK_PINK, [(px - 18, py - 12), (px - 24, py - 22), (px - 10, py - 14)])
-        pygame.draw.polygon(surf, DARK_PINK, [(px + 18, py - 12), (px + 24, py - 22), (px + 10, py - 14)])
-        pygame.draw.circle(surf, DARK_PINK, (px + 20, py), 8)
-        pygame.draw.circle(surf, (80, 40, 50), (px + 23, py - 2), 1)
-        pygame.draw.circle(surf, (80, 40, 50), (px + 23, py + 2), 1)
-        pygame.draw.circle(surf, (30, 30, 30), (px + 5, py - 6), 2)
+        frame = self._pig_frames[(self.stride // 4) % 2 if self.moving else 0]
+        if self.facing < 0:
+            frame = pygame.transform.flip(frame, True, False)
+        surf.blit(frame, (int(self.pig_x) - frame.get_width() // 2, PIG_Y - frame.get_height() // 2))
 
         pygame.draw.circle(surf, RED, (int(self.stim_x), int(self.stim_y)), STIMULUS_RADIUS)
 
