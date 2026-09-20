@@ -14,7 +14,7 @@ than a same-sized, same-edge-count, randomly-rewired network?
 
 ## Result (honest, up front)
 
-On a pig-dodge task where a ball is thrown at the pig, the
+On a pig-dodge task where a pointed dripstone is thrown at the pig, the
 connectome-constrained network **learned ~1.7× faster** than a size- and
 edge-matched random network (rolling reward ≥ 25 by ~22–27k timesteps vs.
 ~39–43k) and **converged on 3/3 seeds** where the baseline converged on 2/3.

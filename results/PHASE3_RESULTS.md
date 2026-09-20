@@ -10,7 +10,8 @@ better than a same-sized, same-edge-count, randomly-rewired network?
 ## Method
 
 - **Task:** `PigDodgeEnv` (Gymnasium) — a pig moves left/right/stays to
-  dodge a ball thrown at it from above. +0.05/step survival, +1.0 per
+  dodge a pointed dripstone falling at it from above (drawn as a red ball
+  in v1; the sprites are cosmetic and do not affect training). +0.05/step survival, +1.0 per
   successful dodge, −10.0 on collision (episode ends). Episodes cap at
   500 steps, so ~31–32 is the practical maximum reward.
 - **Networks:** both variants share identical neuron counts per layer
@@ -26,7 +27,7 @@ better than a same-sized, same-edge-count, randomly-rewired network?
   sample efficiency (timesteps until the 20-episode rolling mean first
   reaches 25), and reliability (how many seeds learned at all).
 
-## Results (v2 — ball thrown at the pig)
+## Results (v2 — stimulus thrown at the pig)
 
 | Variant    | Seed 0 | Seed 1 | Seed 2 | Mean  | Std   |
 |------------|--------|--------|--------|-------|-------|
@@ -68,7 +69,7 @@ Three findings, in decreasing order of confidence:
    successful baseline seeds ended at 29.3 and 30.2 vs. the connectome's
    ~31.6 — a real but small gap, near the task's ceiling. Both successful
    policies converged to essentially the same rule (always move away from
-   the ball, never stand still) and agree on ~91% of random inputs.
+   the falling stimulus, never stand still) and agree on ~91% of random inputs.
 
 Caveats that still apply:
 
@@ -116,5 +117,5 @@ comparable. The v1 artifacts are kept for transparency.
 - 10+ seeds per variant, to put a confidence interval on "how often does
   the baseline fail to learn."
 - The topology-vs-initialization ablation described above.
-- A harder task variant (faster balls, two balls at once, 2-D motion) to
+- A harder task variant (faster stimuli, two at once, 2-D motion) to
   see whether the sample-efficiency gap widens or closes.

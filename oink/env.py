@@ -27,9 +27,11 @@ MAX_STEPS = 500
 
 PINK = (230, 150, 170)
 DARK_PINK = (200, 110, 130)
-RED = (200, 40, 40)
 SKY = (235, 245, 250)
-GROUND = (210, 230, 190)
+GRASS = (105, 170, 70)
+DIRT = (134, 96, 67)
+DIRT_DARK = (112, 78, 52)
+GROUND_TOP = PIG_Y + 15
 
 # Blocky side-view pig, facing right. Each char is a 2x2 pixel block; the
 # 20x14 grid scales to 40x28 px, matching the PIG_HALF_WIDTH hitbox.
@@ -63,13 +65,46 @@ PIG_LEGS = [
 ]
 
 
-def _build_pig_sprite(legs: list[str]) -> pygame.Surface:
-    rows = PIG_BODY + legs
+# Pointed dripstone, tip at the bottom centre. 7x16 blocks = 14x32 px.
+DRIPSTONE_PALETTE = {"s": (128, 128, 128), "h": (165, 165, 165), "d": (88, 88, 88)}
+DRIPSTONE = [
+    "sssssss",
+    "hssssss",
+    "hsssssd",
+    "hsssssd",
+    ".hssssd",
+    ".sssssd",
+    ".hsssd.",
+    ".ssssd.",
+    "..hssd.",
+    "..sss..",
+    "..hsd..",
+    "..ssd..",
+    "...s...",
+    "...d...",
+    "...s...",
+    "...d...",
+]
+
+
+def _build_sprite(rows: list[str], palette: dict) -> pygame.Surface:
     surf = pygame.Surface((len(rows[0]) * PIXEL, len(rows) * PIXEL), pygame.SRCALPHA)
     for y, row in enumerate(rows):
         for x, ch in enumerate(row):
-            if ch in PIG_PALETTE:
-                surf.fill(PIG_PALETTE[ch], (x * PIXEL, y * PIXEL, PIXEL, PIXEL))
+            if ch in palette:
+                surf.fill(palette[ch], (x * PIXEL, y * PIXEL, PIXEL, PIXEL))
+    return surf
+
+
+def _build_ground() -> pygame.Surface:
+    surf = pygame.Surface((WIDTH, HEIGHT - GROUND_TOP))
+    surf.fill(DIRT)
+    surf.fill(GRASS, (0, 0, WIDTH, 6))
+    rng = np.random.default_rng(7)  # fixed: static texture, same every frame
+    for x in range(0, WIDTH, 4):
+        for y in range(8, surf.get_height(), 4):
+            if rng.random() < 0.18:
+                surf.fill(DIRT_DARK, (x, y, 4, 4))
     return surf
 
 
@@ -84,7 +119,9 @@ class PigDodgeEnv(gym.Env):
         self.action_space = spaces.Discrete(3)  # 0=left, 1=stay, 2=right
 
         self._surface = pygame.Surface((WIDTH, HEIGHT))
-        self._pig_frames = [_build_pig_sprite(legs) for legs in PIG_LEGS]
+        self._pig_frames = [_build_sprite(PIG_BODY + legs, PIG_PALETTE) for legs in PIG_LEGS]
+        self._dripstone = _build_sprite(DRIPSTONE, DRIPSTONE_PALETTE)
+        self._ground = _build_ground()
         self._rng = np.random.default_rng()
 
         self.pig_x = WIDTH / 2
@@ -169,14 +206,16 @@ class PigDodgeEnv(gym.Env):
     def render(self):
         surf = self._surface
         surf.fill(SKY)
-        pygame.draw.rect(surf, GROUND, (0, PIG_Y + 15, WIDTH, HEIGHT - PIG_Y - 15))
+        surf.blit(self._ground, (0, GROUND_TOP))
 
         frame = self._pig_frames[(self.stride // 4) % 2 if self.moving else 0]
         if self.facing < 0:
             frame = pygame.transform.flip(frame, True, False)
         surf.blit(frame, (int(self.pig_x) - frame.get_width() // 2, PIG_Y - frame.get_height() // 2))
 
-        pygame.draw.circle(surf, RED, (int(self.stim_x), int(self.stim_y)), STIMULUS_RADIUS)
+        # Tip sits where the old ball's bottom edge was, so contact looks like contact.
+        tip_x, tip_y = int(self.stim_x), int(self.stim_y) + STIMULUS_RADIUS
+        surf.blit(self._dripstone, (tip_x - self._dripstone.get_width() // 2, tip_y - self._dripstone.get_height()))
 
         return np.transpose(pygame.surfarray.array3d(surf), (1, 0, 2))
 
