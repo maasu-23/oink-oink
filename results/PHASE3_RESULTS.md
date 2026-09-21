@@ -51,47 +51,86 @@ Files:
 - Trained-pig behavior: `data/processed/pig_connectome_trained.gif`, `data/processed/pig_baseline_trained.gif`
 - Untrained pig for comparison: `data/processed/pig_random.gif`
 
+## Results (v3 — SageMaker replication + topology-vs-weights ablation)
+
+The v2 comparison was re-run as 9 SageMaker training jobs (`ml.m5.xlarge`,
+ap-south-1, ~2.5 h each; launched with `scripts/sagemaker_train.py`), using
+the same seeds, hyperparameters and timestep budget, plus a third variant:
+
+- **connectome_randinit** — the real wiring (same 6,836 / 12,135 / 359
+  edges) but *random* initial weights on those edges, instead of the
+  rescaled synapse counts. This separates "topology" from
+  "topology + initialization".
+
+| Variant (SageMaker)  | Seed 0 | Seed 1 | Seed 2 | Mean  | Std   | Reached 25 |
+|----------------------|--------|--------|--------|-------|-------|------------|
+| Connectome           | 26.30  | 27.34  | 21.56  | 25.07 | 3.08  | 3/3 (67k / 16k / 33k) |
+| Connectome, rand init| −2.33  | 28.18  | −2.30  | 7.85  | 17.61 | 1/3 (— / 49k / —) |
+| Baseline             | 31.79  | −2.06  | 29.00  | 19.58 | 18.79 | 2/3 (37k / — / 66k) |
+
+Files: `data/processed/sagemaker/{reward_comparison.png,results_summary.csv,logs/,models/}`.
+
+**The same seeds did not reproduce the laptop trajectories.** Connectome
+seed 0 crossed 25 at 24k steps on the laptop and at 67k on SageMaker; seed 1
+at 27k vs 16k. Different CPUs give different floating-point rounding in the
+sparse matmuls, and PPO amplifies tiny differences into different training
+histories. This is expected for RL and is exactly why the laptop numbers
+(a tight 31.6 ± 0.1) should not have been read as precise. Treat the two
+runs as independent replicates — 6 seeds per variant in total.
+
+### Pooled (laptop v2 + SageMaker v3, 6 seeds per variant)
+
+| Variant              | n | Final reward   | Seeds that learned | Steps to reach 25 (median of learners) |
+|----------------------|---|----------------|--------------------|----------------------------------------|
+| Connectome           | 6 | 28.4 ± 4.0     | 6/6                | ~26k |
+| Baseline             | 6 | 20.1 ± 15.4    | 4/6                | ~41k |
+| Connectome, rand init| 3 | 7.9 ± 17.6     | 1/3                | 49k (one seed) |
+
 ## Honest interpretation
 
 Three findings, in decreasing order of confidence:
 
-1. **The connectome network learned faster.** All three connectome seeds
-   crossed a rolling reward of 25 by ~22–27k timesteps; the two baseline
-   seeds that learned at all needed ~39–43k — roughly 1.7× as many
-   samples. This is the clearest signal in the experiment and is visible
-   directly in the reward curves.
-2. **The connectome network learned more reliably.** 3/3 connectome seeds
-   converged, with final rewards within 0.2 of each other. 2/3 baseline
-   seeds converged; baseline seed 1 never escaped the "get hit quickly"
-   regime in 150k steps. The baseline's high std (15.6) is almost entirely
-   that one failed seed.
-3. **Final performance among runs that converged is similar.** The two
-   successful baseline seeds ended at 29.3 and 30.2 vs. the connectome's
-   ~31.6 — a real but small gap, near the task's ceiling. Both successful
-   policies converged to essentially the same rule (always move away from
-   the falling stimulus, never stand still) and agree on ~91% of random inputs.
+1. **The real circuit (wiring + synapse strengths) learns more reliably.**
+   6/6 connectome seeds learned the task across two independent runs on
+   different hardware; 4/6 baseline seeds did. The baseline's failures are
+   total (the pig never escapes the "get hit quickly" regime), which is why
+   its std is so large.
+2. **It learns faster, but by less than v2 alone suggested.** Median time to
+   a rolling reward of 25 is ~26k steps vs ~41k for the baseline — about
+   1.5× (v2 alone said 1.7×). The spread is wide (16k–67k for the
+   connectome), so this is a trend, not a tight estimate.
+3. **The wiring alone is not the source of the advantage.** With random
+   initial weights on the real edges, only 1/3 seeds learned — *worse* than
+   the randomly wired baseline (2/3). The real synapse counts, used as
+   initial weights, are doing most of the work: they hand PPO a network
+   that already roughly maps "stimulus moving left" to "turn right." This
+   is arguably the more interesting result: the connectome's value here
+   comes from its *strengths*, not just its *shape*. Three seeds, so it
+   too is suggestive rather than settled.
+
+Among runs that converged, final performance is similar and near the
+task's ceiling (~31–32); converged policies of every variant use the same
+rule (always step away from the falling stimulus).
 
 Caveats that still apply:
 
-- **3 seeds per variant is limited statistical power.** "2/3 vs 3/3 seeds
-  converged" could be luck; 10+ seeds would be needed to make the
-  reliability claim firmly.
+- **6 seeds (3 for the ablation) is still limited statistical power.**
+  "4/6 vs 6/6" could be luck; 10+ seeds per variant would be needed to make
+  the reliability claim firmly.
 - The task is a deliberately simple proxy for the motion-detection
   behavior the real T4/T5 → HS/VS → DN circuit evolved for. The result
-  says the circuit's *topology* is a useful prior for an analogous 1-D
-  steering problem — not that it replicates fly behavior.
-- The connectome network also inherits the real synapse *counts* as its
-  initial weights (rescaled), whereas the baseline starts from random
-  weights on random edges. The experiment therefore tests
-  "real topology + real weights" vs. "random topology + random weights";
-  it does not separate the contribution of topology from that of
-  initialization. An ablation (real topology, random weights) would be
-  the natural next step.
+  says the circuit is a useful *prior* for an analogous 1-D steering
+  problem — not that it replicates fly behavior.
+- Some SageMaker connectome seeds drifted downward late in training
+  (seed 2 ended at 21.6 after peaking above 30). PPO with these
+  hyperparameters is not perfectly stable at 150k steps; the "final = mean
+  of last 20 episodes" metric is sensitive to that.
 
-**Conclusion:** on this task, the real fly circuit topology learned roughly
-1.7× faster than a size-matched random network and converged on every
-seed where the baseline failed on one. It is a modest, suggestive result
-rather than a definitive one, and it should be reported that way.
+**Conclusion:** on this task, the real fly circuit — wiring *and* synapse
+strengths — learned on every seed and roughly 1.5× faster than a
+size-matched random network, while the wiring with random strengths did
+not help at all. It is a modest, suggestive result rather than a
+definitive one, and it should be reported that way.
 
 ## What changed from v1 (and why)
 
@@ -114,8 +153,11 @@ comparable. The v1 artifacts are kept for transparency.
 
 ## What would strengthen this result
 
-- 10+ seeds per variant, to put a confidence interval on "how often does
-  the baseline fail to learn."
-- The topology-vs-initialization ablation described above.
+- 10+ seeds per variant (cheap now: `scripts/sagemaker_train.py launch
+  --seed 0 1 2 ... 9` runs them in parallel), to put a confidence interval
+  on "how often does the baseline fail to learn."
+- The mirror ablation: *random* wiring with the real synapse-count
+  *distribution* as initial weights, to check whether it is the weight
+  magnitudes or their placement on specific edges that matters.
 - A harder task variant (faster stimuli, two at once, 2-D motion) to
   see whether the sample-efficiency gap widens or closes.

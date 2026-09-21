@@ -102,9 +102,15 @@ class CircuitTrunk(nn.Module):
 
 
 class ConnectomeNetwork(nn.Module):
-    """Full trunk + trainable sensor/motor interface, wired from the real circuit."""
+    """Full trunk + trainable sensor/motor interface, wired from the real circuit.
 
-    def __init__(self, nodes_csv: Path, adjacency_npz: Path, obs_dim: int, out_dim: int):
+    synapse_init=True also seeds the weights from the real (signed, rescaled)
+    synapse counts. synapse_init=False keeps the real wiring but starts from
+    random weights on those edges -- the ablation that separates "topology"
+    from "topology + initialization".
+    """
+
+    def __init__(self, nodes_csv: Path, adjacency_npz: Path, obs_dim: int, out_dim: int, synapse_init: bool = True):
         super().__init__()
         nodes = pd.read_csv(nodes_csv)
         adj = sp.load_npz(adjacency_npz).tocsr()
@@ -127,6 +133,9 @@ class ConnectomeNetwork(nn.Module):
         input_recurrent = sparse_submatrix(idx["input"], idx["input"])
         ip_mask, ip_w = dense_submatrix(idx["input"], idx["processing"])
         po_mask, po_w = dense_submatrix(idx["processing"], idx["output"])
+        if not synapse_init:
+            input_recurrent.values.data.uniform_(-0.1, 0.1)
+            ip_w = po_w = None
 
         self.trunk = CircuitTrunk(
             self.n_input, self.n_processing, self.n_output,

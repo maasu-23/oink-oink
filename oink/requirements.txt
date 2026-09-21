@@ -1,0 +1,6 @@
+# Installed inside the SageMaker PyTorch training container (torch comes with the image).
+stable-baselines3>=2.3
+gymnasium>=1.0
+pygame>=2.5
+scipy>=1.11
+pandas>=2.0

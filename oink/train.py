@@ -29,7 +29,7 @@ def make_model(variant: str, nodes_csv: Path, adjacency_npz: Path, seed: int, lo
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--variant", choices=["connectome", "baseline"], required=True)
+    parser.add_argument("--variant", choices=["connectome", "connectome_randinit", "baseline"], required=True)
     parser.add_argument("--nodes-csv", type=Path, default=Path("data/processed/circuit_nodes.csv"))
     parser.add_argument("--adjacency-npz", type=Path, default=Path("data/processed/circuit_adjacency.npz"))
     parser.add_argument("--timesteps", type=int, default=50_000)

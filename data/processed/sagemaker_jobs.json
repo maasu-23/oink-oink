@@ -1,0 +1,63 @@
+{
+  "pigbrain-connectome-s0-0920-1552": {
+    "variant": "connectome",
+    "seed": 0,
+    "timesteps": 150000,
+    "launched": "0920-1552"
+  },
+  "pigbrain-connectome-s1-0920-1552": {
+    "variant": "connectome",
+    "seed": 1,
+    "timesteps": 150000,
+    "launched": "0920-1552"
+  },
+  "pigbrain-connectome-s2-0920-1552": {
+    "variant": "connectome",
+    "seed": 2,
+    "timesteps": 150000,
+    "launched": "0920-1552"
+  },
+  "pigbrain-baseline-s0-0920-1552": {
+    "variant": "baseline",
+    "seed": 0,
+    "timesteps": 150000,
+    "launched": "0920-1552"
+  },
+  "pigbrain-baseline-s1-0920-1552": {
+    "variant": "baseline",
+    "seed": 1,
+    "timesteps": 150000,
+    "launched": "0920-1552"
+  },
+  "pigbrain-baseline-s2-0920-1552": {
+    "variant": "baseline",
+    "seed": 2,
+    "timesteps": 150000,
+    "launched": "0920-1552"
+  },
+  "pigbrain-connectome-randinit-s0-0920-1552": {
+    "variant": "connectome_randinit",
+    "seed": 0,
+    "timesteps": 150000,
+    "launched": "0920-1552"
+  },
+  "pigbrain-connectome-randinit-s1-0920-1552": {
+    "variant": "connectome_randinit",
+    "seed": 1,
+    "timesteps": 150000,
+    "launched": "0920-1552"
+  },
+  "pigbrain-connectome-randinit-s2-0920-1552": {
+    "variant": "connectome_randinit",
+    "seed": 2,
+    "timesteps": 150000,
+    "launched": "0920-1552"
+  },
+  "pigbrain-connectome-s0-0921-0008": {
+    "variant": "connectome",
+    "seed": 0,
+    "timesteps": 20000,
+    "launched": "0921-0008",
+    "checkpoint_every": 4000
+  }
+}

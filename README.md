@@ -14,23 +14,32 @@ than a same-sized, same-edge-count, randomly-rewired network?
 
 ## Result (honest, up front)
 
-On a pig-dodge task where a pointed dripstone is thrown at the pig, the
-connectome-constrained network **learned ~1.7× faster** than a size- and
-edge-matched random network (rolling reward ≥ 25 by ~22–27k timesteps vs.
-~39–43k) and **converged on 3/3 seeds** where the baseline converged on 2/3.
-Final reward: connectome 31.6 ± 0.1 vs. baseline 20.7 ± 15.6 (the baseline's
-spread is almost entirely its one failed seed). That said:
+On a pig-dodge task where a pointed dripstone is thrown at the pig, across
+two independent runs (laptop, then SageMaker — 6 seeds per variant):
 
-- Among runs that *did* converge, final performance is similar (~30 vs ~31.6)
-  and both ended up with essentially the same "always move away" policy.
-- **3 seeds is limited statistical power.** "3/3 vs 2/3 seeds" could be luck.
-- The connectome network also inherits real synapse counts as initial
-  weights, so this tests topology+initialization together, not topology alone.
+- The connectome-constrained network **learned on 6/6 seeds**; the size- and
+  edge-matched random network learned on **4/6**.
+- It learned **~1.5× faster** (median ~26k timesteps to a rolling reward of
+  25, vs. ~41k for the baseline), with a wide spread.
+- **The wiring alone doesn't explain it.** An ablation with the real wiring
+  but *random* initial weights learned on only 1/3 seeds — worse than the
+  random baseline. The real synapse *strengths*, used as initial weights,
+  carry most of the benefit.
+
+That said:
+
+- Among runs that *did* converge, final performance is similar and every
+  variant ends up with the same "always step away" policy.
+- **6 seeds (3 for the ablation) is limited statistical power.** The
+  reliability gap could still be luck.
+- **Same seeds gave different trajectories on different hardware** — RL
+  runs aren't bitwise reproducible across CPUs, which is why the first run's
+  tight numbers (31.6 ± 0.1) were misleadingly precise.
 - **v1 of this experiment was flawed and is kept for transparency:** with
   uniformly random ball spawns, every trained pig learned to hide in a corner
   instead of dodging. The task was fixed and everything re-run.
 
-Full writeup, including the v1 → v2 story: [`results/PHASE3_RESULTS.md`](results/PHASE3_RESULTS.md).
+Full writeup, including the v1 → v2 → v3 story: [`results/PHASE3_RESULTS.md`](results/PHASE3_RESULTS.md).
 
 **The RL agent is the part that is genuinely self-learning.** The Bedrock
 layer described below is an automated training *supervisor* — it makes
@@ -39,9 +48,9 @@ but it does not itself learn over time.
 
 ## Visuals
 
-| Circuit topology | Reward comparison |
+| Circuit topology | Reward comparison (SageMaker run, 3 variants) |
 |---|---|
-| ![circuit subgraph](data/processed/circuit_subgraph.png) | ![reward comparison](data/processed/reward_comparison.png) |
+| ![circuit subgraph](data/processed/circuit_subgraph.png) | ![reward comparison](data/processed/sagemaker/reward_comparison.png) |
 
 | Untrained pig (random policy) | Trained pig (connectome-constrained) |
 |---|---|
@@ -88,10 +97,22 @@ flowchart LR
 
 | Component | Service |
 |---|---|
-| Raw + processed connectome data | S3 |
+| Processed connectome data, models, logs | S3 — mirrored with [`oink/s3.py`](oink/s3.py) |
 | Circuit topology extraction | [`scripts/extract_circuit.py`](scripts/extract_circuit.py) |
-| RL training (pig environment) | SageMaker ([`oink/train.py`](oink/train.py)) |
+| RL training (pig environment) | SageMaker training jobs — [`scripts/sagemaker_train.py`](scripts/sagemaker_train.py) → [`oink/sagemaker_entry.py`](oink/sagemaker_entry.py) (also runs locally via [`oink/train.py`](oink/train.py)) |
 | Training supervisor / Q&A agent | Bedrock ([`oink/supervisor/`](oink/supervisor/)) |
+
+The v3 comparison (9 jobs: 3 variants × 3 seeds) was trained on SageMaker
+`ml.m5.xlarge` instances in ap-south-1, ~2.5 h each, launched with one
+command:
+
+```bash
+python scripts/sagemaker_train.py launch --variant connectome baseline connectome_randinit --seed 0 1 2
+python scripts/sagemaker_train.py status
+python scripts/sagemaker_train.py fetch      # -> data/processed/sagemaker/
+python scripts/compare_results.py --logs-dir data/processed/sagemaker/logs \
+    --out-dir data/processed/sagemaker --variants connectome connectome_randinit baseline
+```
 
 ## Method
 
@@ -105,6 +126,8 @@ flowchart LR
 3. **Phase 3 — Experiment:** trained both variants with PPO across 3 seeds
    at 150,000 timesteps each, compared final reward, sample efficiency and
    reliability. Caught and fixed a task flaw (corner-camping) and re-ran.
+   Replicated on SageMaker with a third, ablation variant (real wiring,
+   random weights) — 6 seeds per variant in total.
 4. **Phase 4 — Supervisor:** a Bedrock agent (Claude Sonnet 4.5) with tools
    to read real training logs, query the connectome graph, and trigger new
    training runs — verified live end-to-end.
@@ -116,8 +139,11 @@ See [`PLAN.md`](PLAN.md) for the full phase-by-phase plan.
 - `scripts/extract_circuit.py` — Phase 1 connectome extraction
 - `oink/env.py` — pig-dodge Gymnasium environment
 - `oink/network.py` — connectome-constrained and baseline networks
-- `oink/train.py` — PPO training entrypoint
+- `oink/train.py` — PPO training entrypoint (local)
+- `oink/sagemaker_entry.py`, `scripts/sagemaker_train.py` — the same training as SageMaker jobs
+- `oink/s3.py` — mirror `data/processed/` to/from S3
 - `oink/supervisor/` — Bedrock training-supervisor agent and tools
 - `scripts/compare_results.py` — Phase 3 comparison plots/summary
+- `scripts/render_dopamine_3d.py` — the 3D "dopamine" demo video (real skeletons, live activations)
 - `results/PHASE3_RESULTS.md` — full results writeup
-- `data/processed/` — extracted circuit, trained models, plots, GIFs
+- `data/processed/` — extracted circuit, trained models, plots, GIFs; `sagemaker/` holds the v3 run

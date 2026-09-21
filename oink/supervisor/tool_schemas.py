@@ -92,7 +92,31 @@ TOOL_CONFIG = {
                     "json": {
                         "type": "object",
                         "properties": {
-                            "variant": {"type": "string", "enum": ["connectome", "baseline"]},
+                            "variant": {"type": "string", "enum": ["connectome", "baseline", "connectome_randinit"]},
+                            "seed": {"type": "integer"},
+                            "timesteps": {"type": "integer", "description": "Default 150000."},
+                        },
+                        "required": ["variant", "seed"],
+                    }
+                },
+            }
+        },
+        {
+            "toolSpec": {
+                "name": "list_sagemaker_jobs",
+                "description": "List recent PigBrain SageMaker training jobs with their status (InProgress/Completed/Failed) and timestamps.",
+                "inputSchema": {"json": {"type": "object", "properties": {"limit": {"type": "integer", "description": "Default 20."}}}},
+            }
+        },
+        {
+            "toolSpec": {
+                "name": "trigger_sagemaker_retrain",
+                "description": "Launch one PPO training run as a SageMaker training job (ml.m5.xlarge, ~2.5 h, costs money). Only call when the user explicitly asks to train in the cloud. Returns immediately with the job name.",
+                "inputSchema": {
+                    "json": {
+                        "type": "object",
+                        "properties": {
+                            "variant": {"type": "string", "enum": ["connectome", "baseline", "connectome_randinit"]},
                             "seed": {"type": "integer"},
                             "timesteps": {"type": "integer", "description": "Default 150000."},
                         },

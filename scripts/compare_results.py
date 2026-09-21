@@ -29,6 +29,8 @@ def main():
     parser.add_argument("--logs-dir", type=Path, default=Path("data/processed/logs"))
     parser.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     parser.add_argument("--out-dir", type=Path, default=Path("data/processed"))
+    parser.add_argument("--variants", nargs="+", default=["connectome", "baseline"])
+    parser.add_argument("--threshold", type=float, default=25.0, help="Rolling reward that counts as 'learned'.")
     args = parser.parse_args()
 
     import matplotlib
@@ -37,11 +39,13 @@ def main():
     import matplotlib.pyplot as plt
 
     grid = np.linspace(0, 150_000, 300)
-    variant_colors = {"connectome": "#4C72B0", "baseline": "#DD8452"}
+    palette = {"connectome": "#4C72B0", "baseline": "#DD8452", "connectome_randinit": "#55A868"}
+    labels = {"connectome_randinit": "connectome (random init weights)"}
     summary_rows = []
 
     plt.figure(figsize=(9, 6))
-    for variant, color in variant_colors.items():
+    for variant in args.variants:
+        color = palette.get(variant, "#8172B2")
         curves = []
         for seed in args.seeds:
             path = args.logs_dir / f"{variant}_seed{seed}" / "monitor.monitor.csv"
@@ -49,12 +53,15 @@ def main():
             x, y = smoothed_curve(df)
             curves.append(interpolate_to_grid(x, y, grid))
             final_reward = df["r"].tail(20).mean()
-            summary_rows.append({"variant": variant, "seed": seed, "final_ep_rew_mean": final_reward, "n_episodes": len(df)})
+            crossed = np.nonzero(y >= args.threshold)[0]
+            steps_to_threshold = int(x[crossed[0]]) if len(crossed) else None
+            summary_rows.append({"variant": variant, "seed": seed, "final_ep_rew_mean": final_reward,
+                                 "steps_to_threshold": steps_to_threshold, "n_episodes": len(df)})
 
         curves = np.array(curves)
         mean_curve = np.nanmean(curves, axis=0)
         std_curve = np.nanstd(curves, axis=0)
-        plt.plot(grid, mean_curve, label=variant, color=color)
+        plt.plot(grid, mean_curve, label=labels.get(variant, variant), color=color)
         plt.fill_between(grid, mean_curve - std_curve, mean_curve + std_curve, color=color, alpha=0.2)
 
     plt.xlabel("Timesteps")
@@ -73,6 +80,8 @@ def main():
     print(summary.to_string(index=False))
     print("\nPer-variant final performance (mean +/- std across seeds):")
     print(summary.groupby("variant")["final_ep_rew_mean"].agg(["mean", "std"]).to_string())
+    print(f"\nSeeds that reached rolling reward >= {args.threshold:g}:")
+    print(summary.groupby("variant")["steps_to_threshold"].agg(lambda c: f"{c.notna().sum()}/{len(c)}").to_string())
 
 
 if __name__ == "__main__":
