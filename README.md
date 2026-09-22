@@ -146,3 +146,20 @@ python scripts/compare_results.py --logs-dir data/processed/sagemaker/logs \
 - `scripts/render_dopamine_3d.py` — the 3D "dopamine" demo video (real skeletons, live activations)
 - `results/PHASE3_RESULTS.md` — full results writeup
 - `data/processed/` — extracted circuit, trained models, plots, GIFs; `sagemaker/` holds the v3 run
+
+## License and data attribution
+
+- **Code:** MIT ([`LICENSE`](LICENSE)).
+- **Data:** everything under `data/` — the extracted circuit, adjacency matrix,
+  skeleton renders, the dopamine video and the trained models (whose
+  connectome-variant weights start from real synapse counts) — is derived
+  from the [FlyWire](https://flywire.ai) connectome (FAFB v783) and is
+  released under FlyWire's **CC BY-NC 4.0** terms: non-commercial use, with
+  attribution. Details and the papers to cite are in
+  [`data/processed/LICENSE-DATA.md`](data/processed/LICENSE-DATA.md).
+
+The connectome is the work of the FlyWire consortium — Dorkenwald *et al.*
+(2024), Schlegel *et al.* (2024) and Matsliah *et al.* (2024), *Nature* — built
+on the FAFB EM volume of Zheng *et al.* (2018). The PAM dopamine neurons in the
+video are real FlyWire skeletons but are **not** part of the trained network;
+they visualise the RL critic's reward-prediction error.
