@@ -6,7 +6,6 @@ both conditions so the only difference between runs is the trunk wiring.
 """
 from pathlib import Path
 
-import torch.nn as nn
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 from oink.network import BaselineNetwork, ConnectomeNetwork

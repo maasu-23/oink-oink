@@ -68,7 +68,7 @@ from our extracted circuit, colored by role:
 flowchart LR
     subgraph Data
         FW["FlyWire / Codex<br/>FAFB v783 connectome"]
-        S3[("S3<br/>raw + processed adjacency")]
+        S3[("S3<br/>processed circuit, models, logs")]
     end
     subgraph Extraction
         EX["extract_circuit.py<br/>adjacency matrix + subgraph viz"]
@@ -82,7 +82,7 @@ flowchart LR
         BR["Bedrock agent<br/>Claude Sonnet 4.5"]
         TOOLS["Tools: training metrics,<br/>connectome queries, trigger retrain"]
     end
-    DEMO["Pig demo / results dashboard"]
+    DEMO["Pig GIFs / 3D dopamine video"]
 
     FW --> EX --> S3
     S3 --> NET
@@ -132,8 +132,6 @@ python scripts/compare_results.py --logs-dir data/processed/sagemaker/logs \
    to read real training logs, query the connectome graph, and trigger new
    training runs — verified live end-to-end.
 
-See [`PLAN.md`](PLAN.md) for the full phase-by-phase plan.
-
 ## Repo layout
 
 - `scripts/extract_circuit.py` — Phase 1 connectome extraction
@@ -144,6 +142,7 @@ See [`PLAN.md`](PLAN.md) for the full phase-by-phase plan.
 - `oink/s3.py` — mirror `data/processed/` to/from S3
 - `oink/supervisor/` — Bedrock training-supervisor agent and tools
 - `scripts/compare_results.py` — Phase 3 comparison plots/summary
+- `oink/record_gif.py` — record a pig GIF under a random or trained policy
 - `scripts/render_dopamine_3d.py` — the 3D "dopamine" demo video (real skeletons, live activations)
 - `results/PHASE3_RESULTS.md` — full results writeup
 - `data/processed/` — extracted circuit, trained models, plots, GIFs; `sagemaker/` holds the v3 run

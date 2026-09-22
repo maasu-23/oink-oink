@@ -3,8 +3,8 @@ Phase 3 on SageMaker — launch the PPO comparison as SageMaker training jobs.
 
 One job per (variant, seed). Each job runs oink/sagemaker_entry.py inside the
 managed PyTorch CPU container, reads the circuit files from S3, and writes
-model.tar.gz (policy + Monitor CSV) back to S3. `--wait` polls until every
-job finishes and pulls the artefacts into data/processed/ so the existing
+model.tar.gz (policy + Monitor CSV) back to S3. `fetch` pulls finished
+jobs' artefacts into data/processed/sagemaker/ so the existing
 compare_results.py works unchanged.
 
 Usage:

@@ -3,7 +3,6 @@ import argparse
 from pathlib import Path
 
 import imageio
-import numpy as np
 
 from oink.env import PigDodgeEnv
 
@@ -21,9 +20,9 @@ def main():
 
     model = None
     if args.model is not None:
-        from stable_baselines3 import PPO
+        from oink.policy import load_ppo
 
-        model = PPO.load(args.model)
+        model = load_ppo(args.model)
 
     frames = []
     for _ in range(args.steps):

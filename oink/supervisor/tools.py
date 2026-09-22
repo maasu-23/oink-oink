@@ -1,11 +1,10 @@
 """
 Phase 4 — tool implementations the Bedrock supervisor agent can call.
 
-These are plain Python functions with no AWS dependency: the agent layer
-(agent.py) is responsible for exposing them to Bedrock's tool-use API and
-routing tool-call requests back into these functions. Keeping this module
-AWS-free makes the tools independently testable and reusable (e.g. from a
-CLI) without a live Bedrock connection.
+These are plain Python functions: the agent layer (agent.py) is responsible
+for exposing them to Bedrock's tool-use API and routing tool-call requests
+back into these functions. Only the two SageMaker tools touch AWS (and import
+boto3 lazily), so everything else is testable without a live connection.
 """
 import subprocess
 import sys

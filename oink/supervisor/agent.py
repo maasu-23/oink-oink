@@ -5,9 +5,8 @@ This is an automated training *supervisor*: it answers questions about
 training runs and the connectome by calling tools that read real data
 (monitor logs, the extracted adjacency matrix) and can trigger a retrain.
 It does not learn or improve itself over time — only the RL agent it
-supervises does that. See PLAN.md's "Honesty note for writeups."
+supervises does that.
 """
-import json
 import os
 
 import boto3

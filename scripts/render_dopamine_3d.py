@@ -321,7 +321,6 @@ def main():
     # and segment boundaries fade to black and back. A flash event is the
     # frame index at which a reward landed, so the text can ease in/out.
     timeline: list[tuple[int, float]] = []
-    fade_at: list[tuple[int, int]] = []  # (frame index, direction) -1 = out, +1 = in
     for t in range(n_steps):
         last_in_seg = t + 1 == n_steps or seg_of[t + 1] != seg_of[t]
         for sub in range(args.substeps):
