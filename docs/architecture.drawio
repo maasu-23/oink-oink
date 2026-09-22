@@ -1,0 +1,107 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="pigbrain-arch" name="PigBrain architecture">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== Title ===== -->
+        <mxCell id="title" value="&lt;b&gt;&lt;font style=&quot;font-size: 20px&quot;&gt;PigBrain&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot; color=&quot;#5a6270&quot;&gt;a fly-connectome-constrained RL agent, trained on Amazon SageMaker, supervised by Amazon Bedrock&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontColor=#232F3E;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="800" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== AWS cloud + region groups ===== -->
+        <mxCell id="awscloud" value="AWS Cloud" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="420" y="90" width="720" height="560" as="geometry" />
+        </mxCell>
+        <mxCell id="region" value="ap-south-1 (Mumbai)" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_region;strokeColor=#00A4A6;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#147EBA;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="130" width="680" height="500" as="geometry" />
+        </mxCell>
+
+        <!-- ===== AWS services ===== -->
+        <mxCell id="s3" value="Amazon S3&lt;br&gt;&lt;font color=&quot;#5a6270&quot;&gt;circuit data · trained models · logs&lt;/font&gt;" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#7AA116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
+          <mxGeometry x="520" y="345" width="70" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="sagemaker" value="Amazon SageMaker&lt;br&gt;&lt;font color=&quot;#5a6270&quot;&gt;PPO training jobs (ml.m5.xlarge)&lt;br&gt;3 variants × 3 seeds, 150k steps&lt;/font&gt;" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#01A88D;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sagemaker;" vertex="1" parent="1">
+          <mxGeometry x="780" y="190" width="70" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="iam" value="IAM execution role&lt;br&gt;&lt;font color=&quot;#5a6270&quot;&gt;PigBrainSageMakerRole&lt;/font&gt;" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#DD344C;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.identity_and_access_management;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="190" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cloudwatch" value="CloudWatch Logs&lt;br&gt;&lt;font color=&quot;#5a6270&quot;&gt;per-job training output&lt;/font&gt;" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="345" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="bedrock" value="Amazon Bedrock&lt;br&gt;&lt;font color=&quot;#5a6270&quot;&gt;Claude Sonnet 4.5 · training supervisor&lt;br&gt;Converse API with tool use&lt;/font&gt;" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#01A88D;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" vertex="1" parent="1">
+          <mxGeometry x="780" y="500" width="70" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Outside AWS ===== -->
+        <mxCell id="flywire" value="FlyWire Codex&lt;br&gt;&lt;font color=&quot;#5a6270&quot;&gt;FAFB v783 connectome&lt;br&gt;synapse tables · cell types · skeletons&lt;/font&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3E;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.generic_database;" vertex="1" parent="1">
+          <mxGeometry x="60" y="180" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="laptop" value="Developer laptop&lt;br&gt;&lt;font color=&quot;#5a6270&quot;&gt;extract_circuit.py → 12,376-neuron circuit&lt;br&gt;PigDodgeEnv (Gymnasium) · ConnectomeNetwork (PyTorch)&lt;br&gt;launch / fetch jobs · supervisor CLI&lt;/font&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3E;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.client;" vertex="1" parent="1">
+          <mxGeometry x="230" y="350" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="outputs" value="Results&lt;br&gt;&lt;font color=&quot;#5a6270&quot;&gt;reward comparison · ablation&lt;br&gt;3D &quot;dopamine&quot; video · README&lt;/font&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3E;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.documents;" vertex="1" parent="1">
+          <mxGeometry x="230" y="560" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Flows ===== -->
+        <mxCell id="e1" value="1. download synapse tables&lt;br&gt;+ neuron skeletons" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#232F3E;fontSize=10;fontColor=#232F3E;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="flywire" target="laptop">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="260" y="210" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="2. push circuit_nodes.csv&lt;br&gt;+ adjacency (oink/s3.py)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#232F3E;fontSize=10;fontColor=#232F3E;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="laptop" target="s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="3. create_training_job ×9&lt;br&gt;(scripts/sagemaker_train.py)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#232F3E;fontSize=10;fontColor=#232F3E;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1" source="laptop" target="sagemaker">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="260" y="160" /><mxPoint x="720" y="160" /><mxPoint x="720" y="225" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="4. input channel:&lt;br&gt;circuit files" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#7AA116;fontSize=10;fontColor=#232F3E;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="s3" target="sagemaker">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="555" y="240" /><mxPoint x="780" y="240" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="5. model.tar.gz&lt;br&gt;(policy + reward log)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#01A88D;fontSize=10;fontColor=#232F3E;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="sagemaker" target="s3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="815" y="380" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="assumes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#DD344C;fontSize=10;fontColor=#232F3E;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1" source="sagemaker" target="iam">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="stdout" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#E7157B;fontSize=10;fontColor=#232F3E;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1" source="sagemaker" target="cloudwatch">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="900" y="225" /><mxPoint x="900" y="375" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="6. fetch models + logs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#7AA116;fontSize=10;fontColor=#232F3E;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="s3" target="laptop">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="555" y="440" /><mxPoint x="300" y="440" /><mxPoint x="300" y="395" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="7. Converse API: questions about runs &amp; neurons" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;startArrow=block;strokeColor=#232F3E;fontSize=10;fontColor=#232F3E;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="laptop" target="bedrock">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="260" y="535" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="tool: trigger_sagemaker_retrain" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#01A88D;fontSize=10;fontColor=#232F3E;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1" source="bedrock" target="sagemaker">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="960" y="535" /><mxPoint x="960" y="225" /></Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" value="8. compare_results.py&lt;br&gt;render_dopamine_3d.py" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#232F3E;fontSize=10;fontColor=#232F3E;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="laptop" target="outputs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Legend / note ===== -->
+        <mxCell id="note" value="&lt;font color=&quot;#5a6270&quot;&gt;Tools the supervisor can call: training metrics · variant comparison · connectome queries (real synapse counts) · list SageMaker jobs · trigger local or SageMaker retrain.&lt;br&gt;Data: FlyWire FAFB v783, CC BY-NC 4.0. Code: MIT. github.com/maasu-23/oink-oink&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=top;fontSize=10;fontColor=#232F3E;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="40" y="670" width="1100" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
