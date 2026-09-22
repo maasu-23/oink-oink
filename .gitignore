@@ -1,6 +1,15 @@
 .venv/
 __pycache__/
 *.pyc
+.ruff_cache/
 data/raw/
-.env
 *.stdout.log
+
+# Secrets: never commit credentials of any shape.
+.env
+.env.*
+!.env.example
+*credentials*
+*.pem
+*.key
+.aws/
